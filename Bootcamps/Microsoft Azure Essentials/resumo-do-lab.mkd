@@ -1,1 +1,22 @@
+## Painel Localizando Serviços por Categoria, Configuração de Idioma e Tema
 
+### Painel Localizando Serviços por Categoria
+O painel "Localizando Serviços por Categoria" no Microsoft Azure Portal é uma ferramenta essencial para encontrar rapidamente os serviços necessários. Ele organiza os serviços em categorias lógicas, como "Compute", "Armazenamento", "Redes", etc. Essa organização facilita a navegação, especialmente para usuários que estão iniciando no Azure ou que trabalham com uma variedade de serviços.
+
+**Principais benefícios:**
+
+* **Agilidade:** Encontre os serviços que você precisa de forma rápida e intuitiva.
+* **Organização:** Os serviços são agrupados por categoria, facilitando a busca.
+* **Produtividade:** Economize tempo ao encontrar os serviços que você precisa.
+
+### Configuração de Idioma e Tema
+O Azure Portal permite que você personalize a sua experiência, ajustando o idioma e o tema da interface. Essa personalização torna o trabalho no portal mais confortável e eficiente.
+
+#### Configuração de Idioma:
+* **Disponibilidade:** O Azure Portal está disponível em diversos idiomas, permitindo que você trabalhe na sua língua materna.
+* **Como configurar:** Acesse as configurações do seu perfil e escolha o idioma desejado.
+
+#### Configuração de Tema:
+* **Opções:** O Azure Portal oferece diferentes temas, como claro e escuro.
+* **Benefícios:** A escolha do tema adequado pode reduzir a fadiga visual e melhorar a experiência do usuário.
+* **Como configurar:** Acesse as configurações do seu perfil e escolha o tema desejado.
