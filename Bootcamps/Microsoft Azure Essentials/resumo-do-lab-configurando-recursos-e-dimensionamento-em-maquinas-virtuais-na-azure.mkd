@@ -1,0 +1,17 @@
+## Configurando Recursos e Dimensionamento em Máquinas Virtuais na Azure
+
+**Resumo:**
+
+* **Escolha do tipo de VM:** Entenda os diferentes tipos de VMs disponíveis (A, D, E, F, etc.) e como escolher o mais adequado para sua carga de trabalho, considerando CPU, memória, armazenamento e rede.
+* **Tamanho da VM:** Descubra como selecionar o tamanho correto da VM para garantir que seus aplicativos tenham recursos suficientes para funcionar de forma eficiente.
+* **Armazenamento:** Explore as opções de armazenamento disponíveis (SSD, HDD, Managed Disks) e como configurar o armazenamento para suas VMs, considerando desempenho, custo e redundância.
+* **Rede:** Aprenda a configurar a rede virtual, sub-redes e interfaces de rede para suas VMs, garantindo conectividade e segurança.
+* **Dimensionamento automático:** Descubra como configurar o dimensionamento automático para escalar suas VMs de forma horizontal, adaptando-se à demanda e otimizando os custos.
+* **Conjuntos de dimensionamento de VMs:** Entenda como utilizar conjuntos de dimensionamento de VMs para gerenciar grupos de VMs de forma eficiente e escalável.
+
+**Benefícios da configuração correta:**
+
+* **Desempenho otimizado:** Garanta que suas aplicações tenham os recursos necessários para executar com rapidez e eficiência.
+* **Escalabilidade:** Adapte seus recursos à demanda, evitando gargalos e garantindo alta disponibilidade.
+* **Redução de custos:** Otimize o uso de recursos, pagando apenas pelo que você utiliza.
+* **Gerenciamento simplificado:** Automatize a configuração e o gerenciamento de suas VMs.
