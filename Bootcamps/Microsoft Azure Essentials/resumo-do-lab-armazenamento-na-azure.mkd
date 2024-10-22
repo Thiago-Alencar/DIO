@@ -1,0 +1,28 @@
+## Armazenamento na Azure: 
+
+**Resumo:**
+
+
+**Serviços de Armazenamento na Azure:**
+
+* **Azure Blob Storage:** Ideal para armazenar grandes volumes de dados não estruturados, como arquivos de imagem, vídeo, arquivos de backup e dados de aplicativos.
+* **Azure Disk Storage:** Projetado para armazenar dados em blocos para máquinas virtuais, oferecendo alto desempenho e integração perfeita com as VMs do Azure.
+* **Azure Files:** Permite compartilhar arquivos entre várias máquinas virtuais e aplicativos, como um compartilhamento de arquivos tradicional, mas na nuvem.
+* **Azure Table Storage:** Um armazenamento NoSQL altamente escalável, ideal para armazenar grandes volumes de dados não relacionais, como dados de sensores e informações de perfil de usuário.
+* **Azure Queue Storage:** Um serviço de filas que permite que aplicações se comuniquem de forma assíncrona, ideal para processamento de mensagens e filas de tarefas.
+
+**Características-chave do Armazenamento na Azure:**
+
+* **Escalabilidade:** Ajuste automaticamente o armazenamento para atender às suas necessidades em constante mudança.
+* **Durabilidade:** Seus dados são replicados em várias regiões para garantir alta disponibilidade e durabilidade.
+* **Desempenho:** Oferece alto desempenho para uma variedade de cargas de trabalho.
+* **Segurança:** Proteja seus dados com recursos de segurança robustos, incluindo criptografia e controle de acesso baseado em função.
+* **Custo-benefício:** Pague apenas pelo que você usa, com opções de armazenamento quente, frio e arquivamento para otimizar os custos.
+
+**Cenários de uso comuns:**
+
+* **Armazenamento de dados de aplicativos:** Armazene dados de aplicativos web, móveis e de IoT.
+* **Backup e recuperação de dados:** Crie backups de seus dados e recupere-os rapidamente em caso de desastre.
+* **Análise de dados:** Armazene grandes volumes de dados para análise e aprendizado de máquina.
+* **Arquivos compartilhados:** Compartilhe arquivos entre várias máquinas virtuais e aplicativos.
+* **Processamento de mensagens:** Use filas para processar mensagens de forma assíncrona.
