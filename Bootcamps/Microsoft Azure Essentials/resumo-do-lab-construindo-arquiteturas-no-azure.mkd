@@ -1,0 +1,21 @@
+## Construindo Arquiteturas no Azure: 
+
+### Conceitos Fundamentais
+* **Grupos de Recursos:** Organização lógica dos recursos do Azure.
+* **Regiões:** Locais geográficos onde os serviços são hospedados.
+* **Planos de Serviço:** Modelos de implantação com diferentes níveis de controle e flexibilidade.
+* **Redes Virtuais:** Isolamento de recursos em uma rede privada.
+* **Sub-redes:** Divisão de redes virtuais em segmentos menores.
+
+### Principais Serviços
+* **Compute:** Máquinas virtuais (VM), Serviços de Contêiner (AKS), Funções, App Service.
+* **Armazenamento:** Discos, Blobs, Filas, Tabelas.
+* **Banco de Dados:** SQL Database, Cosmos DB, Redis Cache.
+* **Redes:** Virtual Networks, Load Balancers, DNS.
+
+### Práticas Recomendadas
+* **Estrutura Bem Arquitetada:** Princípios de design para criar soluções confiáveis, seguras, eficientes e gerenciáveis.
+* **Cloud Adoption Framework:** Guia passo a passo para planejar e implementar uma estratégia de nuvem.
+* **Design para a Falha:** Construir sistemas resilientes que podem lidar com falhas.
+* **Segurança:** Implementar medidas de segurança robustas para proteger seus dados.
+* **Otimização de Custos:** Escolher os serviços e planos de serviço adequados para otimizar os custos.
