@@ -1,0 +1,33 @@
+## Acesso, Segurança e Identidade na Azure
+
+**Resumo:**
+
+A segurança da identidade e do acesso é fundamental para proteger seus recursos na nuvem Azure. Neste guia, exploraremos os principais serviços e recursos da Azure que permitem gerenciar e proteger o acesso aos seus dados e aplicativos.
+
+**Por que a segurança de identidade é importante?**
+
+* **Proteção de dados:** Garante que apenas usuários autorizados tenham acesso aos seus dados confidenciais.
+* **Prevenção de ameaças:** Reduz o risco de ataques cibernéticos, como invasões e roubo de identidade.
+* **Conformidade:** Ajuda a cumprir as normas de segurança e conformidade, como GDPR e HIPAA.
+
+**Serviços e recursos-chave:**
+
+* **Azure Active Directory (Azure AD):** O serviço de diretório centralizado da Azure, que oferece autenticação, autorização e gerenciamento de identidade.
+* **Autenticação multifator (MFA):** Adiciona uma camada extra de segurança, exigindo uma segunda forma de autenticação além da senha.
+* **Acesso condicional:** Permite definir políticas de acesso personalizadas com base em diferentes condições, como localização, dispositivo e aplicativo.
+* **Controle de acesso baseado em função (RBAC):** Permite granularmente definir permissões para usuários e grupos, garantindo que cada um tenha apenas o acesso necessário.
+* **Azure Security Center:** Fornece uma visão unificada da segurança de seus recursos na Azure, com recomendações e alertas personalizados.
+
+**Conceitos-chave:**
+
+* **Identidade:** Representa um usuário, dispositivo ou aplicação que precisa acessar os recursos da Azure.
+* **Autenticação:** O processo de verificar a identidade de um usuário.
+* **Autorização:** O processo de determinar quais recursos um usuário autenticado pode acessar.
+* **Permissão:** Um conjunto de direitos que define o que um usuário pode fazer com um recurso.
+
+**Cenários de uso:**
+
+* **Gerenciamento de acesso de funcionários:** Crie e gerencie identidades para seus funcionários, fornecendo acesso seguro aos recursos da empresa.
+* **Acesso de parceiros e fornecedores:** Conceda acesso seguro a parceiros e fornecedores, limitando suas permissões aos recursos necessários.
+* **Autenticação de aplicativos:** Proteja seus aplicativos com autenticação segura e baseada em identidade.
+* **Conformidade com regulamentações:** Garanta que seus recursos estejam em conformidade com as normas de segurança e privacidade.
