@@ -1,0 +1,16 @@
+### Entendendo o Gerenciamento de Custos
+* **Visibilidade:** Monitore seus gastos em tempo real e identifique áreas de potencial economia.
+* **Orçamentos e Alertas:** Defina limites de gastos e receba notificações quando se aproximar deles.
+* **Análise:** Utilize relatórios detalhados para entender seus padrões de consumo e tomar decisões mais informadas.
+
+### Simulando Custos com a Calculadora de Máquinas Virtuais
+Antes de provisionar novas máquinas virtuais, utilize a calculadora para:
+* **Estimar custos:** Calcule o custo total de propriedade (TCO) com base em suas necessidades específicas.
+* **Comparar opções:** Avalie diferentes configurações de máquinas virtuais e escolha a mais econômica.
+* **Planejar:** Faça projeções de custos para seus projetos futuros.
+
+### Dicas para Otimizar Seus Custos
+* **Rightsizing:** Ajuste o tamanho de suas máquinas virtuais para corresponder à demanda real.
+* **Reservas:** Adquira reservas para obter descontos significativos em workloads estáveis.
+* **Spot Instances:** Utilize instâncias spot para economizar em workloads flexíveis.
+* **Azure Advisor:** Receba recomendações personalizadas para otimizar seus recursos.
