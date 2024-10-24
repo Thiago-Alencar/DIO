@@ -1,0 +1,34 @@
+### **Ferramentas de Monitoramento no Azure: 
+
+O Azure oferece um conjunto robusto de ferramentas para monitorar a saúde, desempenho e disponibilidade de seus aplicativos e serviços na nuvem. Essas ferramentas permitem que você colete, analise e visualize dados de telemetria de forma eficiente, ajudando a identificar e resolver problemas rapidamente.
+
+**Principais Ferramentas:**
+
+- **Azure Monitor:**
+    - **Métricas:** Coleta dados numéricos em tempo real sobre o desempenho de seus recursos.
+    - **Logs:** Armazena dados textuais sobre eventos e atividades do sistema.
+    - **Alertas:** Cria notificações personalizadas com base em métricas e logs.
+    - **Painéis:** Visualiza dados de forma personalizada para acompanhar a saúde do seu ambiente.
+- **Application Insights:**
+    - **Monitoramento de aplicativos:** Rastreamento de solicitações, dependências e desempenho de código.
+    - **Análise de falhas:** Identificação de exceções e gargalos de desempenho.
+    - **Uso:** Análise do comportamento do usuário e métricas de uso.
+- **Log Analytics:**
+    - **Pesquisa e análise de logs:** Consulta de dados de logs de várias fontes usando a linguagem Kusto.
+    - **Visualizações:** Criação de visualizações personalizadas para analisar dados.
+- **Azure Monitor for VMs:**
+    - **Monitoramento de máquinas virtuais:** Coleta dados de desempenho e integridade de VMs.
+    - **Diagnósticos:** Identificação de problemas comuns em VMs.
+
+**Benefícios:**
+
+- **Visibilidade:** Obtenha uma visão completa do seu ambiente de nuvem.
+- **Proatividade:** Identifique e resolva problemas antes que afetem os usuários.
+- **Otimização:** Melhore o desempenho e a escalabilidade de seus aplicativos.
+- **Conformidade:** Garanta a conformidade com regulamentações e padrões de segurança.
+
+**Cenários de Uso:**
+
+- **Monitoramento de aplicativos web:** Rastrear o desempenho de APIs, bancos de dados e outros componentes.
+- **Monitoramento de infraestrutura:** Acompanhar a saúde de máquinas virtuais, redes e armazenamento.
+- **Análise de logs de segurança:** Detectar e responder a ameaças de segurança.
