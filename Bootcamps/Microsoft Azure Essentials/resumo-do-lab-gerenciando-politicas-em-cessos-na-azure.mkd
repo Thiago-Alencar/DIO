@@ -1,0 +1,28 @@
+## Portal de Confiança de Serviços no Azure: 
+
+O **Portal de Confiança de Serviços** da Microsoft é uma plataforma online que oferece transparência e informações detalhadas sobre a segurança, conformidade e governança dos serviços em nuvem da Microsoft, incluindo o Azure. É um recurso essencial para organizações que buscam garantir a proteção de seus dados e o cumprimento de requisitos regulatórios.
+
+**Por que ele é importante para governança e purview?**
+
+* **Visibilidade completa:** O portal fornece uma visão abrangente da postura de segurança da sua organização na nuvem, permitindo identificar áreas de risco e tomar medidas corretivas.
+* **Demonstração de conformidade:** Com relatórios detalhados de auditoria e certificações, o portal auxilia na demonstração de conformidade com diversas normas e regulamentações, como ISO 27001, HIPAA, GDPR e outras.
+* **Suporte à governança de dados:** Ao fornecer informações sobre a localização e o acesso aos dados, o portal contribui para uma gestão de dados mais eficaz e alinhada com as políticas da organização.
+* **Integração com o Microsoft Purview:** O Portal de Confiança de Serviços se integra com o Microsoft Purview, oferecendo uma visão unificada da governança de dados em toda a sua organização.
+
+**O que você encontra no portal?**
+
+Além dos recursos já mencionados, o portal oferece:
+
+* **Relatórios personalizáveis:** Crie relatórios personalizados para atender às suas necessidades específicas de governança e conformidade.
+* **Painéis interativos:** Visualize dados de segurança e conformidade de forma intuitiva e fácil de entender.
+* **Integração com outras ferramentas:** Integre o portal com outras ferramentas de segurança e conformidade para obter uma visão mais completa da sua postura de segurança.
+
+**Como o Portal de Confiança de Serviços se relaciona com o Microsoft Purview?**
+
+O Microsoft Purview é uma plataforma de governança de dados que oferece uma visão unificada dos seus dados, independentemente de onde eles estão armazenados. Ao se integrar com o Portal de Confiança de Serviços, o Purview permite que você:
+
+* **Classifique e rotule dados:** Classifique seus dados com base em sua sensibilidade e aplique rótulos para controlar o acesso.
+* **Rastrear a linhagem de dados:** Entenda a origem e o fluxo dos seus dados para garantir a conformidade e a segurança.
+* **Automatizar políticas de proteção de dados:** Implemente políticas de proteção de dados de forma automatizada para garantir que seus dados estejam sempre protegidos.
+
+**Em resumo,** o Portal de Confiança de Serviços, em conjunto com o Microsoft Purview, oferece uma solução completa para a governança de dados na nuvem. Ao fornecer visibilidade, conformidade e automação, essas ferramentas ajudam as organizações a proteger seus dados e a atender aos requisitos regulatórios.
