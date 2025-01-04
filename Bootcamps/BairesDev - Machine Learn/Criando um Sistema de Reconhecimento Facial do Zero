@@ -1,0 +1,211 @@
+ Criando um Sistema de Reconhecimento Facial do Zero
+
+Passo 1: Configuração do Ambiente no Colab
+
+Instalar as Bibliotecas: Execute as seguintes células para instalar as bibliotecas necessárias:
+
+!pip install tensorflow opencv-python mtcnn numpy matplotlib scikit-learn
+Use code with caution.
+Python
+Passo 2: Importar as Bibliotecas
+
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+from mtcnn import MTCNN
+import os
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.layers import Dense, Flatten, Dropout
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.preprocessing.image import img_to_array, load_img
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import classification_report, accuracy_score
+Use code with caution.
+Python
+Passo 3: Preparação do Dataset
+
+Download das Imagens: Para este exemplo, vamos usar um conjunto pequeno de imagens dos personagens de The Big Bang Theory. 
+
+!git clone https://github.com/jhonatan-silva/big-bang-theory-faces.git
+
+Python
+Organização do Dataset: As imagens estão organizadas em pastas, onde cada pasta tem o nome de um personagem.
+
+dataset_path = 'big-bang-theory-faces/faces'
+characters = os.listdir(dataset_path)
+print("Personagens:", characters)
+Use code with caution.
+Python
+Passo 4: Detecção de Faces com MTCNN
+
+detector = MTCNN()
+
+def detect_faces(image_path):
+    image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
+    detections = detector.detect_faces(image)
+    faces = []
+    for detection in detections:
+        x, y, w, h = detection['box']
+        x, y = abs(x), abs(y)
+        face = image[y:y+h, x:x+w]
+        faces.append(face)
+    return faces
+
+def draw_bounding_boxes(image_path, detections):
+    image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
+    for detection in detections:
+        x, y, w, h = detection['box']
+        x, y = abs(x), abs(y)
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    plt.imshow(image)
+    plt.show()
+Use code with caution.
+Python
+Passo 5: Preparação dos Dados para o Modelo de Classificação
+
+def load_and_preprocess_data(dataset_path, target_size=(224, 224)):
+    images = []
+    labels = []
+    for character in os.listdir(dataset_path):
+        character_path = os.path.join(dataset_path, character)
+        for image_name in os.listdir(character_path):
+            image_path = os.path.join(character_path, image_name)
+            faces = detect_faces(image_path)
+            if faces:
+                for face in faces:
+                    face = cv2.resize(face, target_size)
+                    face = img_to_array(face)
+                    face = face / 255.0
+                    images.append(face)
+                    labels.append(character)
+    return np.array(images), np.array(labels)
+
+images, labels = load_and_preprocess_data(dataset_path)
+print("Número de imagens:", len(images))
+print("Número de labels:", len(labels))
+Use code with caution.
+Python
+Passo 6: Codificação dos Labels
+
+label_encoder = LabelEncoder()
+integer_labels = label_encoder.fit_transform(labels)
+encoded_labels = to_categorical(integer_labels)
+print("Labels codificados:", encoded_labels.shape)
+Use code with caution.
+Python
+Passo 7: Divisão dos Dados
+
+X_train, X_test, y_train, y_test = train_test_split(images, encoded_labels, test_size=0.2, random_state=42)
+print("Tamanho do conjunto de treinamento:", X_train.shape)
+print("Tamanho do conjunto de teste:", X_test.shape)
+Use code with caution.
+Python
+Passo 8: Construção do Modelo de Classificação (Transfer Learning com ResNet50)
+
+base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+for layer in base_model.layers:
+    layer.trainable = False
+
+x = base_model.output
+x = Flatten()(x)
+x = Dense(256, activation='relu')(x)
+x = Dropout(0.5)(x)
+output = Dense(len(label_encoder.classes_), activation='softmax')(x)
+
+model = Model(inputs=base_model.input, outputs=output)
+model.compile(optimizer=Adam(learning_rate=0.0001), loss='categorical_crossentropy', metrics=['accuracy'])
+model.summary()
+Use code with caution.
+Python
+Passo 9: Treinamento do Modelo
+
+history = model.fit(X_train, y_train, validation_split=0.1, epochs=10, batch_size=32)
+Use code with caution.
+Python
+Passo 10: Avaliação do Modelo
+
+y_pred = model.predict(X_test)
+y_pred_classes = np.argmax(y_pred, axis=1)
+y_true_classes = np.argmax(y_test, axis=1)
+
+print("Acurácia:", accuracy_score(y_true_classes, y_pred_classes))
+print("Relatório de Classificação:\n", classification_report(y_true_classes, y_pred_classes, target_names=label_encoder.classes_))
+Use code with caution.
+Python
+Passo 11: Teste com uma Imagem
+
+def recognize_faces(image_path, model, label_encoder):
+    image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
+    detections = detector.detect_faces(image)
+    for detection in detections:
+        x, y, w, h = detection['box']
+        x, y = abs(x), abs(y)
+        face = image[y:y+h, x:x+w]
+        face = cv2.resize(face, (224, 224))
+        face = img_to_array(face)
+        face = face / 255.0
+        face = np.expand_dims(face, axis=0)
+        prediction = model.predict(face)
+        predicted_class = np.argmax(prediction)
+        predicted_label = label_encoder.inverse_transform([predicted_class])[0]
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(image, predicted_label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+    plt.imshow(image)
+    plt.show()
+
+test_image_path = 'big-bang-theory-faces/test_image.jpg'
+recognize_faces(test_image_path, model, label_encoder)
+Use code with caution.
+Python
+Documentação:
+
+Bibliotecas:
+
+tensorflow: Framework de deep learning.
+
+opencv-python: Biblioteca para manipulação de imagens.
+
+mtcnn: Implementação do MTCNN para detecção de faces.
+
+numpy: Biblioteca para operações numéricas.
+
+matplotlib: Biblioteca para visualização de dados.
+
+scikit-learn: Biblioteca para tarefas de aprendizado de máquina.
+
+Detecção de Faces:
+
+A função detect_faces utiliza o MTCNN para detectar faces em uma imagem e retorna as regiões das faces.
+
+A função draw_bounding_boxes desenha os retângulos ao redor das faces detectadas.
+
+Preparação dos Dados:
+
+A função load_and_preprocess_data carrega as imagens, detecta as faces, redimensiona e normaliza os pixels.
+
+Os labels são codificados usando LabelEncoder e to_categorical.
+
+Os dados são divididos em conjuntos de treinamento e teste.
+
+Modelo de Classificação:
+
+Utiliza o ResNet50 como modelo base para transfer learning.
+
+As camadas convolucionais são congeladas e novas camadas de classificação são adicionadas.
+
+O modelo é compilado com o otimizador Adam e a função de perda categorical crossentropy.
+
+Treinamento e Avaliação:
+
+O modelo é treinado com o conjunto de treinamento e validado com o conjunto de validação.
+
+O desempenho do modelo é avaliado com o conjunto de teste, calculando acurácia e relatório de classificação.
+
+Reconhecimento de Faces:
+
+A função recognize_faces detecta as faces em uma imagem, as classifica e desenha os retângulos com os nomes das pessoas.
+
+A função recognize_faces detecta as faces em uma imagem, as classifica e desenha os retângulos com os nomes das pessoas.
