@@ -1,0 +1,167 @@
+Documentação do Projeto
+
+Objetivo: Este projeto tem como objetivo transformar uma imagem colorida em uma imagem em tons de cinza e, em seguida, binarizá-la para preto e branco.
+
+Algoritmo:
+
+Carregamento da Imagem: A imagem é carregada usando a função cv2.imread().
+
+Conversão para Tons de Cinza: A imagem colorida é convertida para tons de cinza usando cv2.cvtColor() com o código cv2.COLOR_BGR2GRAY.
+
+Binarização: A imagem em tons de cinza é binarizada usando cv2.threshold(). Pixels com valor abaixo do limiar são definidos como 0 (preto), e pixels com valor acima do limiar são definidos como 255 (branco).
+
+Exibição: As imagens original, em tons de cinza e binarizada são exibidas usando matplotlib.pyplot.
+
+Histograma: O histograma da imagem em tons de cinza é exibido para visualizar a distribuição dos níveis de cinza.
+
+Bibliotecas Utilizadas:
+
+cv2 (OpenCV): Para leitura, conversão e binarização de imagens.
+
+numpy: Para manipulação de arrays de imagens.
+
+google.colab.patches.cv2_imshow: Para exibir imagens no Colab.
+
+matplotlib.pyplot: Para exibição de imagens e histogramas.
+
+Como Usar:
+
+Substitua 'sua_imagem.jpg' pelo caminho da sua imagem.
+
+Ajuste o valor do limiar na função main() se necessário.
+
+Execute o código no Google Colab.
+
+Observações:
+
+O limiar de binarização pode ser ajustado para obter diferentes resultados.
+
+O histograma pode ajudar a escolher um limiar adequado.
+
+
+import cv2
+import numpy as np
+from google.colab.patches import cv2_imshow
+import matplotlib.pyplot as plt
+
+def carregar_imagem(caminho_imagem):
+    """Carrega uma imagem a partir de um caminho.
+
+    Args:
+        caminho_imagem (str): O caminho para a imagem.
+
+    Returns:
+        numpy.ndarray: A imagem carregada como um array NumPy.
+    """
+    try:
+        img = cv2.imread(caminho_imagem)
+        if img is None:
+            raise FileNotFoundError(f"Não foi possível carregar a imagem em: {caminho_imagem}")
+        return img
+    except FileNotFoundError as e:
+        print(e)
+        return None
+
+def converter_para_tons_de_cinza(img):
+    """Converte uma imagem colorida para tons de cinza.
+
+    Args:
+        img (numpy.ndarray): A imagem colorida.
+
+    Returns:
+        numpy.ndarray: A imagem em tons de cinza.
+    """
+    img_cinza = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    return img_cinza
+
+def binarizar_imagem(img_cinza, limiar):
+    """Binariza uma imagem em tons de cinza.
+
+    Args:
+        img_cinza (numpy.ndarray): A imagem em tons de cinza.
+        limiar (int): O valor do limiar para binarização.
+
+    Returns:
+        numpy.ndarray: A imagem binarizada.
+    """
+    _, img_binarizada = cv2.threshold(img_cinza, limiar, 255, cv2.THRESH_BINARY)
+    return img_binarizada
+
+def exibir_imagens(img_original, img_cinza, img_binarizada):
+    """Exibe as imagens original, em tons de cinza e binarizada.
+
+    Args:
+        img_original (numpy.ndarray): A imagem original.
+        img_cinza (numpy.ndarray): A imagem em tons de cinza.
+        img_binarizada (numpy.ndarray): A imagem binarizada.
+    """
+    plt.figure(figsize=(15, 5))
+
+    plt.subplot(1, 3, 1)
+    plt.imshow(cv2.cvtColor(img_original, cv2.COLOR_BGR2RGB))
+    plt.title("Imagem Original")
+    plt.axis('off')
+
+    plt.subplot(1, 3, 2)
+    plt.imshow(img_cinza, cmap='gray')
+    plt.title("Imagem em Tons de Cinza")
+    plt.axis('off')
+
+    plt.subplot(1, 3, 3)
+    plt.imshow(img_binarizada, cmap='gray')
+    plt.title("Imagem Binarizada")
+    plt.axis('off')
+
+    plt.show()
+
+def exibir_histograma(img_cinza):
+    """Exibe o histograma de uma imagem em tons de cinza.
+
+    Args:
+        img_cinza (numpy.ndarray): A imagem em tons de cinza.
+    """
+    plt.figure(figsize=(8, 4))
+    plt.hist(img_cinza.flatten(), bins=256, range=[0, 256], color='gray')
+    plt.title("Histograma da Imagem em Tons de Cinza")
+    plt.xlabel("Nível de Cinza")
+    plt.ylabel("Frequência")
+    plt.show()
+
+def main():
+    """Função principal para executar o processo de transformação de imagem."""
+    caminho_imagem = 'sua_imagem.jpg'  # Substitua pelo caminho da sua imagem
+    limiar = 127  # Valor do limiar para binarização
+
+    img_original = carregar_imagem(caminho_imagem)
+    if img_original is None:
+        return
+
+    img_cinza = converter_para_tons_de_cinza(img_original)
+    img_binarizada = binarizar_imagem(img_cinza, limiar)
+
+    exibir_imagens(img_original, img_cinza, img_binarizada)
+    exibir_histograma(img_cinza)
+
+if __name__ == "__main__":
+    main()
+
+
+Como Executar:
+
+Copie o código acima para uma célula no seu notebook do Google Colab.
+
+Substitua 'sua_imagem.jpg' pelo caminho da sua imagem (você pode fazer o upload da imagem para o Colab).
+
+Execute a célula.
+
+Resultado:
+
+O código irá exibir:
+
+A imagem original.
+
+A imagem convertida para tons de cinza.
+
+A imagem binarizada (preto e branco).
+
+O histograma da imagem em tons de cinza.
