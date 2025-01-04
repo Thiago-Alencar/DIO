@@ -1,0 +1,201 @@
+
+
+## Projeto de Transfer Learning em Python 
+O projeto consiste em aplicar o método de Transfer Learning em uma rede de Deep Learning na linguagem Python no ambiente COLAB.  
+
+Para exemplo, utilizaremos o seguinte projeto que realiza Transfer Learning com o Dataset do MNIST: 
+https://colab.research.google.com/github/kylemath/ml4a-guides/blob/master/notebooks/transfer-learning.ipynb 
+
+O dataset utilizado engloba duas classes: gatos e cachorros. Uma descrição da base de dados pode ser visualizada neste link: https://www.tensorflow.org/datasets/catalog/cats_vs_dogs. 
+
+Já o dataset para download pode ser acessado por meio deste outro link:
+
+https://www.microsoft.com/en-us/download/details.aspx?id=54765. 
+
+ 
+
+Observações: Neste projeto, você pode usar sua própria base de dados (exemplo: fotos suas, dos seus pais, dos seus amigos, dos seus animais domésticos, etc), o exemplo de gatos e cachorros, pode ser substituído por duas outras classes do seu interesse. O Dataset criado em nosso projeto anterior, pode ser utilizado agora.  
+
+!pip install keras
+!pip install tensorflow
+
+!pip uninstall Pillow
+!pip install Pillow
+
+import zipfile
+
+# Especificar o caminho do arquivo ZIP (ajuste conforme necessário)
+caminho_arquivo_zip = '/content/kagglecatsanddogs_5340 (1).zip'
+
+try:
+    with zipfile.ZipFile(caminho_arquivo_zip, 'r') as zip_ref:
+        zip_ref.extractall()
+    print("Arquivos descompactados com sucesso!")
+except zipfile.BadZipfile:
+    print("O arquivo ZIP está corrompido ou não é um arquivo ZIP válido.")
+
+import os
+import random
+import numpy as np
+import keras
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import imshow
+from keras.preprocessing import image
+from keras.applications.imagenet_utils import preprocess_input
+from keras.models import Sequential, Model
+from keras.layers import Dense, Dropout, Flatten, Activation
+from keras.layers import Conv2D, MaxPooling2D
+
+import os
+import random
+import numpy as np
+import keras
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import imshow
+from keras.preprocessing import image
+from keras.applications.imagenet_utils import preprocess_input
+from keras.models import Sequential, Model
+from keras.layers import Dense, Dropout, Flatten, Activation
+from keras.layers import Conv2D, MaxPooling2D
+
+# 1. Configuração do Dataset
+root = '/content/PetImages'  # Substitua pelo caminho do seu dataset
+categories = ['/content/PetImages/Cat', '/content/PetImages/Dog']  # Nomes das pastas de classes
+num_classes = len(categories)
+train_split, val_split = 0.7, 0.15
+
+# Função para carregar imagens
+def get_image(path):
+    img = image.load_img(path, target_size=(224, 224))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+    x = preprocess_input(x)
+    return img, x
+
+# Carregar imagens e rótulos
+data = []
+for c, category in enumerate(categories):
+    images = [os.path.join(root, category, f) for f in os.listdir(os.path.join(root, category))
+              if os.path.splitext(f)[1].lower() in ['.jpg','.png','.jpeg', '.tif', '.tiff']]
+    print(f"Category: {category}, Images: {images[:5]}")
+    for img_path in images:
+        try:
+            img, x = get_image(img_path)
+            data.append({'x': np.array(x[0]), 'y': c})
+        except Exception as e:
+            if "cannot identify image file" in str(e):
+                print(f"Erro ao carregar imagem (não imagem): {img_path}, Erro: {e}")
+            elif "Truncated File Read" in str(e):
+                print(f"Aviso: Arquivo TIFF truncado: {img_path}, Erro: {e}")
+            else:
+                print(f"Erro ao carregar imagem: {img_path}, Erro: {e}")
+
+# Embaralhar os dados
+random.shuffle(data)
+
+# Dividir em treino, validação e teste
+idx_val = int(train_split * len(data))
+idx_test = int((train_split + val_split) * len(data))
+train = data[:idx_val]
+val = data[idx_val:idx_test]
+test = data[idx_test:]
+
+# Separar dados e rótulos
+x_train, y_train = np.array([t["x"] for t in train]), [t["y"] for t in train]
+x_val, y_val = np.array([t["x"] for t in val]), [t["y"] for t in val]
+x_test, y_test = np.array([t["x"] for t in test]), [t["y"] for t in test]
+
+# Pré-processamento
+x_train = x_train.astype('float32') / 255.
+x_val = x_val.astype('float32') / 255.
+x_test = x_test.astype('float32') / 255.
+
+y_train = keras.utils.to_categorical(y_train, num_classes)
+y_val = keras.utils.to_categorical(y_val, num_classes)
+y_test = keras.utils.to_categorical(y_test, num_classes)
+
+# Resumo dos dados
+print("finished loading %d images from %d categories"%(len(data), num_classes))
+print("train / validation / test split: %d, %d, %d"%(len(x_train), len(x_val), len(x_test)))
+print("training data shape: ", x_train.shape)
+print("training labels shape: ", y_train.shape)
+
+# 2. Modelo Base (Scratch)
+model = Sequential()
+model.add(Conv2D(32, (3, 3), input_shape=x_train.shape[1:]))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Conv2D(32, (3, 3)))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+model.add(Conv2D(32, (3, 3)))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Conv2D(32, (3, 3)))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+model.add(Flatten())
+model.add(Dense(256))
+model.add(Activation('relu'))
+model.add(Dropout(0.5))
+model.add(Dense(num_classes))
+model.add(Activation('softmax'))
+
+model.compile(loss='categorical_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+
+history = model.fit(x_train, y_train,
+                    batch_size=128,
+                    epochs=10,
+                    validation_data=(x_val, y_val))
+
+loss, accuracy = model.evaluate(x_test, y_test, verbose=0)
+print('Test loss (scratch):', loss)
+print('Test accuracy (scratch):', accuracy)
+
+# 3. Transfer Learning (VGG16)
+vgg = keras.applications.VGG16(weights='imagenet', include_top=True)
+inp = vgg.input
+new_classification_layer = Dense(num_classes, activation='softmax')
+out = new_classification_layer(vgg.layers[-2].output)
+model_new = Model(inp, out)
+
+for l, layer in enumerate(model_new.layers[:-1]):
+    layer.trainable = False
+for l, layer in enumerate(model_new.layers[-1:]):
+    layer.trainable = True
+
+model_new.compile(loss='categorical_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+
+history2 = model_new.fit(x_train, y_train,
+                         batch_size=128,
+                         epochs=10,
+                         validation_data=(x_val, y_val))
+
+loss, accuracy = model_new.evaluate(x_test, y_test, verbose=0)
+print('Test loss (transfer learning):', loss)
+print('Test accuracy (transfer learning):', accuracy)
+
+# Plotagem dos resultados
+fig = plt.figure(figsize=(16,4))
+ax = fig.add_subplot(121)
+ax.plot(history.history["val_loss"], label="Scratch")
+ax.plot(history2.history["val_loss"], label="Transfer Learning")
+ax.set_title("validation loss")
+ax.set_xlabel("epochs")
+ax.legend()
+
+ax2 = fig.add_subplot(122)
+ax2.plot(history.history["val_acc"], label="Scratch")
+ax2.plot(history2.history["val_acc"], label="Transfer Learning")
+ax2.set_title("validation accuracy")
+ax2.set_xlabel("epochs")
+ax2.set_ylim(0, 1)
+ax2.legend()
+
+plt.show()
