@@ -1,0 +1,348 @@
+Criando um sistema de assistência virtual do zero
+# Importando as bibliotecas necessárias
+import speech_recognition as sr
+from gtts import gTTS
+import os
+from datetime import datetime
+import playsound
+import pyjokes
+import wikipedia
+import webbrowser
+import winshell
+from pygame import mixer
+import geopy
+from geopy.geocoders import Nominatim
+from geopy.distance import geodesic
+
+# Configuração do geolocator
+geolocator = Nominatim(user_agent="my_geocoder")
+
+# Função para converter texto em fala
+def speak(text, language='en'):
+    """
+    Converte texto em fala e reproduz o áudio.
+
+    Args:
+        text (str): O texto a ser convertido em fala.
+        language (str, optional): O idioma do texto. Padrão é 'en' (inglês).
+    """
+    tts = gTTS(text=text, lang=language)
+    filename = "voice.mp3"
+    try:
+        os.remove(filename)
+    except OSError:
+        pass
+    tts.save(filename)
+    playsound.playsound(filename)
+
+# Função para obter áudio do microfone e converter em texto
+def get_audio():
+    """
+    Captura áudio do microfone, converte em texto e retorna o texto em minúsculas.
+
+    Returns:
+        str: O texto reconhecido a partir do áudio, ou uma string vazia em caso de erro.
+    """
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        r.pause_threshold = 1
+        r.adjust_for_ambient_noise(source, duration=1)
+        try:
+            print("Ouvindo...")
+            audio = r.listen(source)
+            said = r.recognize_google(audio, language='pt-BR')  # Reconhecimento em português
+            print(f"Você disse: {said}")
+            return said.lower()
+        except sr.UnknownValueError:
+            speak("Desculpe, não entendi.")
+            return ""
+        except sr.RequestError:
+            speak("Desculpe, o serviço não está disponível.")
+            return ""
+        except Exception as e:
+            print(f"Erro ao reconhecer áudio: {e}")
+            return ""
+
+# Função para encontrar a farmácia mais próxima
+def find_nearest_pharmacy(user_location):
+    """
+    Encontra a farmácia mais próxima da localização do usuário.
+
+    Args:
+        user_location (tuple): Tupla com a latitude e longitude do usuário.
+
+    Returns:
+        str: Uma mensagem com o nome e endereço da farmácia mais próxima, ou uma mensagem de erro.
+    """
+    try:
+        # Lista de farmácias (substitua com dados reais ou uma API)
+        pharmacies = [
+            ("Farmácia A", (-23.5505, -46.6333)),  # Exemplo de farmácia em São Paulo
+            ("Farmácia B", (-23.5600, -46.6400)),  # Exemplo de farmácia em São Paulo
+            ("Farmácia C", (-23.5400, -46.6500)),  # Exemplo de farmácia em São Paulo
+        ]
+
+        if not pharmacies:
+            return "Não foi possível encontrar farmácias próximas."
+
+        # Calcula a distância para cada farmácia
+        distances = [geodesic(user_location, pharmacy[1]).km for pharmacy in pharmacies]
+        
+        # Encontra a farmácia mais próxima
+        closest_pharmacy_index = distances.index(min(distances))
+        closest_pharmacy = pharmacies[closest_pharmacy_index]
+        
+        return f"A farmácia mais próxima é {closest_pharmacy[0]}, localizada em {closest_pharmacy[1]}"
+    except Exception as e:
+        print(f"Erro ao encontrar farmácia: {e}")
+        return "Não foi possível encontrar a farmácia mais próxima."
+
+# Função para obter a localização do usuário
+def get_user_location():
+    """
+    Obtém a localização do usuário usando o geolocator.
+
+    Returns:
+        tuple: Uma tupla com a latitude e longitude do usuário, ou None em caso de erro.
+    """
+    try:
+        location = geolocator.geocode("current location")
+        if location:
+            return (location.latitude, location.longitude)
+        else:
+            speak("Não foi possível obter sua localização.")
+            return None
+    except Exception as e:
+        print(f"Erro ao obter localização: {e}")
+        speak("Não foi possível obter sua localização.")
+        return None
+
+# Função para responder aos comandos
+def respond(text):
+    """
+    Analisa o texto do usuário e executa ações correspondentes.
+
+    Args:
+        text (str): O texto do comando do usuário.
+    """
+    print(f"Comando recebido: {text}")
+
+    if 'youtube' in text:
+        speak("O que você quer pesquisar no YouTube?")
+        keyword = get_audio()
+        if keyword:
+            url = f"https://www.youtube.com/results?search_query={keyword}"
+            webbrowser.get().open(url)
+            speak(f"Aqui está o que encontrei para {keyword} no YouTube.")
+    elif 'pesquisar' in text:
+        speak("O que você quer pesquisar?")
+        query = get_audio()
+        if query:
+            try:
+                result = wikipedia.summary(query, sentences=3, language='pt')
+                speak("De acordo com a Wikipedia:")
+                print(result)
+                speak(result, language='pt')
+            except wikipedia.exceptions.PageError:
+                speak("Não encontrei informações sobre isso na Wikipedia.")
+            except Exception as e:
+                print(f"Erro ao pesquisar na Wikipedia: {e}")
+                speak("Ocorreu um erro ao pesquisar.")
+    elif 'piada' in text:
+        speak(pyjokes.get_joke(language='pt'))
+    elif 'esvaziar lixeira' in text:
+        winshell.recycle_bin().empty(confirm=False, show_progress=False, sound=True)
+        speak("Lixeira esvaziada.")
+    elif 'que horas são' in text:
+        strTime = datetime.today().strftime("%H:%M %p")
+        print(strTime)
+        speak(f"Agora são {strTime}")
+    elif 'tocar música' in text or 'tocar canção' in text:
+        speak("Tocando música...")
+        music_dir = "C:\\Users\\UserName\\Downloads\\Music\\"  # Substitua pelo seu diretório de música
+        try:
+            songs = os.listdir(music_dir)
+            if songs:
+                playmusic(os.path.join(music_dir, songs[0]))
+            else:
+                speak("Não encontrei músicas no diretório especificado.")
+        except FileNotFoundError:
+            speak("Diretório de música não encontrado.")
+    elif 'parar música' in text:
+        speak("Parando a reprodução.")
+        stopmusic()
+    elif 'farmácia' in text:
+        speak("Localizando a farmácia mais próxima...")
+        user_location = get_user_location()
+        if user_location:
+            pharmacy_info = find_nearest_pharmacy(user_location)
+            speak(pharmacy_info)
+        else:
+            speak("Não foi possível obter sua localização para encontrar a farmácia.")
+    elif 'sair' in text or 'encerrar' in text:
+        speak("Até a próxima!")
+        exit()
+    else:
+        speak("Desculpe, não entendi o comando.")
+
+# Função para tocar música
+def playmusic(song):
+    """
+    Inicializa o mixer e toca a música especificada.
+
+    Args:
+        song (str): O caminho completo para o arquivo de música.
+    """
+    mixer.init()
+    mixer.music.load(song)
+    mixer.music.play()
+
+# Função para parar a música
+def stopmusic():
+    """
+    Para a reprodução de música.
+    """
+    mixer.music.stop()
+
+# Loop principal do assistente virtual
+if __name__ == "__main__":
+    speak("Olá! Como posso ajudar?", language='pt')
+    while True:
+        print("Estou ouvindo...")
+        text = get_audio()
+        if text:
+            respond(text)
+Use code with caution.
+Python
+Documentação Detalhada:
+
+Importação de Bibliotecas:
+
+speech_recognition: Para converter fala em texto.
+
+gtts: Para converter texto em fala.
+
+os: Para interagir com o sistema operacional (remover arquivos, listar diretórios).
+
+datetime: Para obter a hora atual.
+
+playsound: Para reproduzir arquivos de áudio.
+
+pyjokes: Para obter piadas aleatórias.
+
+wikipedia: Para pesquisar informações na Wikipedia.
+
+webbrowser: Para abrir URLs no navegador.
+
+winshell: Para interagir com a lixeira do Windows.
+
+pygame.mixer: Para reproduzir arquivos de áudio (música).
+
+geopy: Para geolocalização e cálculo de distâncias.
+
+geopy.geocoders: Para obter informações de localização.
+
+geopy.distance: Para calcular distâncias geodésicas.
+
+Função speak(text, language='en'):
+
+Converte o texto fornecido em fala usando a biblioteca gTTS.
+
+Salva o áudio em um arquivo temporário voice.mp3.
+
+Reproduz o áudio usando playsound.
+
+Remove o arquivo temporário após a reprodução.
+
+Permite especificar o idioma do texto (padrão é inglês).
+
+Função get_audio():
+
+Inicializa o reconhecedor de fala da biblioteca speech_recognition.
+
+Captura o áudio do microfone.
+
+Ajusta o reconhecedor para o ruído ambiente.
+
+Tenta reconhecer a fala usando o Google Speech Recognition (em português).
+
+Retorna o texto reconhecido em minúsculas.
+
+Trata erros de reconhecimento e de serviço.
+
+Função find_nearest_pharmacy(user_location):
+
+Recebe a localização do usuário (latitude e longitude).
+
+Possui uma lista de farmácias (substitua por dados reais ou uma API).
+
+Calcula a distância entre a localização do usuário e cada farmácia usando geodesic.
+
+Retorna o nome e endereço da farmácia mais próxima.
+
+Trata erros e retorna uma mensagem apropriada.
+
+Função get_user_location():
+
+Utiliza o Nominatim para obter a localização do usuário.
+
+Retorna a latitude e longitude do usuário.
+
+Trata erros e retorna None em caso de falha.
+
+Função respond(text):
+
+Analisa o texto do comando do usuário.
+
+Executa ações com base em palavras-chave:
+
+youtube: Abre o YouTube com a pesquisa do usuário.
+
+pesquisar: Pesquisa na Wikipedia e exibe o resumo.
+
+piada: Conta uma piada aleatória.
+
+esvaziar lixeira: Esvazia a lixeira do Windows.
+
+que horas são: Informa a hora atual.
+
+tocar música ou tocar canção: Toca a primeira música do diretório especificado.
+
+parar música: Para a reprodução de música.
+
+farmácia: Localiza a farmácia mais próxima.
+
+sair ou encerrar: Encerra o programa.
+
+Responde com mensagens de voz apropriadas.
+
+Funções playmusic(song) e stopmusic():
+
+playmusic: Inicializa o mixer e toca a música especificada.
+
+stopmusic: Para a reprodução de música.
+
+Loop Principal:
+
+Inicia o assistente virtual com uma saudação.
+
+Entra em um loop infinito para ouvir comandos do usuário.
+
+Chama get_audio() para obter o comando do usuário.
+
+Chama respond() para executar a ação correspondente.
+
+Como Executar:
+
+Instale as Bibliotecas:
+
+pip install SpeechRecognition gTTS playsound pyjokes wikipedia pygame geopy winshell
+
+Bash
+Substitua os placeholders:
+
+C:\\Users\\UserName\\Downloads\\Music\\ pelo seu diretório de música.
+
+Execute o script:
+
+python seu_script.py
