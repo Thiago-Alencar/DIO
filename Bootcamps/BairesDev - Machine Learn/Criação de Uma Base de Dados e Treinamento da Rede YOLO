@@ -1,0 +1,182 @@
+Entendendo o Transfer Learning com YOLOv3
+
+O transfer learning é uma técnica poderosa em deep learning que nos permite usar o conhecimento adquirido por um modelo já treinado em uma grande quantidade de dados (como o YOLOv3 treinado em COCO) e aplicá-lo a um novo problema com um conjunto de dados menor. Isso economiza tempo e recursos computacionais, além de melhorar o desempenho do modelo em tarefas específicas.
+
+O que vamos fazer:
+
+Configurar o Ambiente: Vamos preparar o Colab com as ferramentas necessárias, incluindo o Darknet.
+
+Preparar os Dados: Vamos organizar seus dados de treinamento e validação, incluindo as novas classes que você quer detectar.
+
+Adaptar o YOLOv3: Vamos ajustar a configuração do YOLOv3 para acomodar as novas classes e realizar o transfer learning.
+
+Treinar o Modelo: Vamos iniciar o treinamento do modelo com seus dados.
+
+Avaliar o Modelo: Vamos verificar o desempenho do modelo treinado.
+
+Mãos à Obra!
+
+Passo 1: Configuração do Ambiente no Colab
+
+Vamos começar com a configuração do ambiente no Colab. Isso inclui a instalação do Darknet e a conexão com o Google Drive.
+
+# Conectar com o Google Drive
+from google.colab import drive
+drive.mount('/content/gdrive')
+
+# Verificar se a GPU está disponível
+!nvidia-smi
+
+# Clonar o repositório Darknet
+!git clone https://github.com/AlexeyAB/darknet
+
+# Mudar para o diretório Darknet
+%cd darknet
+
+# Editar o Makefile para habilitar GPU e OpenCV
+!sed -i 's/GPU=0/GPU=1/g' Makefile
+!sed -i 's/OPENCV=0/OPENCV=1/g' Makefile
+
+# Compilar o Darknet
+!make
+
+# Voltar para o diretório raiz
+%cd ..
+Use code with caution.
+Python
+Passo 2: Preparação dos Dados
+
+Agora, vamos preparar seus dados. Você precisará de:
+
+Imagens: As imagens que você usará para treinar o modelo.
+
+Anotações: Arquivos de texto com as coordenadas das bounding boxes para cada objeto em cada imagem.
+
+Arquivos de Configuração:
+
+obj.data: Um arquivo que define o número de classes, os arquivos de treinamento e validação, e o caminho para o arquivo de nomes das classes.
+
+obj.names: Um arquivo com o nome de cada classe.
+
+yolov3.cfg: O arquivo de configuração do YOLOv3, que precisaremos ajustar.
+
+train.txt: Um arquivo com o caminho para cada imagem de treinamento.
+
+test.txt: Um arquivo com o caminho para cada imagem de validação.
+
+Estrutura de Diretórios no Google Drive:
+
+Recomendo que você organize seus arquivos no Google Drive da seguinte forma:
+
+My Drive/
+    darknet/
+        data/
+            obj/
+                images/
+                    image1.jpg
+                    image2.jpg
+                    ...
+                labels/
+                    image1.txt
+                    image2.txt
+                    ...
+            obj.data
+            obj.names
+            train.txt
+            test.txt
+        yolov3.cfg
+        darknet53.conv.74
+Use code with caution.
+Criando os Arquivos de Configuração:
+
+obj.names: Crie um arquivo obj.names com o nome de cada classe em uma linha. Por exemplo, se você estiver adicionando as classes "carro" e "bicicleta", seu arquivo seria:
+
+carro
+bicicleta
+Use code with caution.
+obj.data: Crie um arquivo obj.data com as seguintes informações:
+
+classes = 2  # Número total de classes (incluindo as novas)
+train  = /content/gdrive/My Drive/darknet/data/train.txt
+valid  = /content/gdrive/My Drive/darknet/data/test.txt
+names  = /content/gdrive/My Drive/darknet/data/obj.names
+backup = /content/gdrive/My Drive/darknet/backup
+Use code with caution.
+train.txt e test.txt: Crie esses arquivos com o caminho para cada imagem de treinamento e validação, respectivamente. Por exemplo:
+
+/content/gdrive/My Drive/darknet/data/obj/images/image1.jpg
+/content/gdrive/My Drive/darknet/data/obj/images/image2.jpg
+...
+Use code with caution.
+Passo 3: Adaptando o yolov3.cfg
+
+Agora, vamos adaptar o arquivo yolov3.cfg. Você precisará fazer as seguintes alterações:
+
+Número de Classes: Encontre as camadas [yolo] e ajuste o número de classes. Você precisará fazer isso em três lugares. Por exemplo, se você tiver 2 classes, altere classes=80 para classes=2.
+
+Número de Filtros: Encontre as camadas [convolutional] antes das camadas [yolo] e ajuste o número de filtros. O número de filtros deve ser (classes + 5) * 3. Por exemplo, se você tiver 2 classes, altere filters=255 para filters=21.
+
+Exemplo de Alteração no yolov3.cfg:
+
+[convolutional]
+size=1
+stride=1
+pad=1
+filters=21 # Alterado de 255
+activation=linear
+
+[yolo]
+mask = 0,1,2
+anchors = 10,13,  16,30,  33,23,  30,61,  62,45,  59,119,  116,90,  156,198,  373,326
+classes=2 # Alterado de 80
+num=9
+jitter=.3
+ignore_thresh=.7
+truth_thresh=1
+random=1
+Use code with caution.
+Passo 4: Treinando o Modelo
+
+Agora, vamos treinar o modelo. Use o seguinte comando:
+
+# Copiar o arquivo de pesos pré-treinados
+!cp /content/gdrive/My\ Drive/darknet/darknet53.conv.74 ./darknet/
+
+# Treinar o modelo
+!./darknet/darknet detector train /content/gdrive/My\ Drive/darknet/data/obj.data /content/gdrive/My\ Drive/darknet/yolov3.cfg ./darknet/darknet53.conv.74 -dont_show
+Use code with caution.
+Python
+Passo 5: Avaliando o Modelo
+
+Após o treinamento, você pode avaliar o modelo usando o arquivo test.txt e o arquivo de pesos gerado durante o treinamento.
+
+Código Completo:
+
+# Conectar com o Google Drive
+from google.colab import drive
+drive.mount('/content/gdrive')
+
+# Verificar se a GPU está disponível
+!nvidia-smi
+
+# Clonar o repositório Darknet
+!git clone https://github.com/AlexeyAB/darknet
+
+# Mudar para o diretório Darknet
+%cd darknet
+
+# Editar o Makefile para habilitar GPU e OpenCV
+!sed -i 's/GPU=0/GPU=1/g' Makefile
+!sed -i 's/OPENCV=0/OPENCV=1/g' Makefile
+
+# Compilar o Darknet
+!make
+
+# Voltar para o diretório raiz
+%cd ..
+
+# Copiar o arquivo de pesos pré-treinados
+!cp /content/gdrive/My\ Drive/darknet/darknet53.conv.74 ./darknet/
+
+# Treinar o modelo
+!./darknet/darknet detector train /content/gdrive/My\ Drive/darknet/data/obj.data /content/gdrive/My\ Drive/darknet/yolov3.cfg ./darknet/darknet53.conv.74 -dont_show
