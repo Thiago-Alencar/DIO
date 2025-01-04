@@ -1,0 +1,472 @@
+Descrição do Desafio
+Sistema de recomendação por imagens 
+Depois de entender o funcionamento de Sistemas de Recomendação e suas aplicações, neste projeto vamos então desenvolver um modelo capaz de classificar imagens por sua similaridade e gerar resultados para o usuário de um site. Os resultados esperados são direcionados para, por meio de um produto buscado na internet, o Sistema de Recomendação deve indicar produtos relacionados, mas não por seus dados textuais (preço, modelo, marca, loja) e, sim, por sua aparência física (formato, cor, textura, etc).  
+
+Para que este sistema seja desenvolvido, vamos treinar uma rede de Deep Learning com várias classes de objetos, como por exemplo: relógio, camiseta, bicicleta, sapato, etc.  Dentro de cada classe devemos ter objetos que são parecidos em sua aparência
+
+1. Preparação do Ambiente e Instalação das Bibliotecas
+
+Primeiro, vamos instalar as bibliotecas necessárias e configurar o ambiente:
+
+# Instalação das bibliotecas
+!pip install -q -U kaggle
+!pip install --upgrade --force-reinstall --no-deps kaggle
+!pip install -q annoy
+!pip install -q tensorflow tensorflow-hub
+!pip install -q pandas
+!pip install -q tqdm
+!pip install -q Pillow
+!pip install -q flask
+!pip install -q streamlit
+!pip install -q colab-everything
+
+# Importação das bibliotecas
+import os
+import zipfile
+import requests
+from tqdm import tqdm
+from shutil import move
+from pandas import read_csv
+from pathlib import Path
+import shutil
+import tensorflow as tf
+import tensorflow_hub as hub
+import numpy as np
+import pandas as pd
+import glob
+import json
+from annoy import AnnoyIndex
+from scipy import spatial
+import pickle
+import time
+from PIL import Image
+import tarfile
+import io
+import base64
+from flask import Flask, request, jsonify, send_file
+from flask import redirect, url_for, flash, render_template
+from colab_everything import ColabStreamlit
+Use code with caution.
+Python
+2. Aquisição e Organização dos Dados
+
+Vamos baixar o dataset do Kaggle e organizar as imagens em diretórios por categoria:
+
+# Configuração do Kaggle
+%%writefile kaggle.json
+{"username":"<your kaggle username>","key":"<your kaggle api key>"}
+
+!mkdir ~/.kaggle
+!cp kaggle.json ~/.kaggle/
+!chmod 600 ~/.kaggle/kaggle.json
+
+# Download do dataset
+!kaggle datasets download -d paramaggarwal/fashion-product-images-small
+!unzip fashion-product-images-small.zip
+
+# Criação da estrutura de diretórios
+import pandas as pd
+from shutil import move
+import os
+from tqdm import tqdm
+
+os.makedirs('/content/Fashion_data', exist_ok=True)
+os.chdir('/content/Fashion_data')
+
+df = pd.read_csv('/content/styles.csv', usecols=['id','masterCategory']).reset_index()
+df['id'] = df['id'].astype('str')
+
+all_images = os.listdir('/content/images/')
+co = 0
+os.makedirs('/content/Fashion_data/categories', exist_ok=True)
+for image in tqdm(all_images):
+    category = df[df['id'] == image.split('.')[0]]['masterCategory']
+    category = str(list(category)[0])
+    if not os.path.exists(os.path.join('/content/Fashion_data/categories', category)):
+        os.makedirs(os.path.join('/content/Fashion_data/categories', category), exist_ok=True)
+    path_from = os.path.join('/content/images', image)
+    path_to = os.path.join('/content/Fashion_data/categories', category, image)
+    move(path_from, path_to)
+    co += 1
+print('Moved {} images.'.format(co))
+Use code with caution.
+Python
+3. Extração de Características com CNN
+
+Agora, vamos usar uma CNN pré-treinada para extrair as características visuais das imagens:
+
+# Configuração do modelo
+MODULE_HANDLE = 'https://tfhub.dev/google/bit/m-r50x3/1'
+IMAGE_SIZE = (224, 224)
+BATCH_SIZE = 32
+N_FEATURES = 2048
+
+# Carregamento do modelo
+print("Building model with", MODULE_HANDLE)
+model = tf.keras.Sequential([
+    tf.keras.layers.InputLayer(input_shape=IMAGE_SIZE + (3,)),
+    hub.KerasLayer(MODULE_HANDLE, trainable=False),
+    tf.keras.layers.Dense(N_FEATURES,
+                          kernel_regularizer=tf.keras.regularizers.l2(0.0001))
+])
+model.build((None,)+IMAGE_SIZE+(3,))
+model.summary()
+
+# Função para carregar e pré-processar imagens
+def load_img(path):
+  img = tf.io.read_file(path)
+  img = tf.io.decode_jpeg(img, channels=3)
+  img = tf.image.resize_with_pad(img, 224, 224)
+  img  = tf.image.convert_image_dtype(img, tf.float32)[tf.newaxis, ...]
+  return img
+
+# Extração de características e salvamento
+imgvec_path = '/content/img_vectors/'
+Path(imgvec_path).mkdir(parents=True, exist_ok=True)
+
+img_paths = []
+for path in Path('/content/Fashion_data/categories').rglob('*.jpg'):
+  img_paths.append(path)
+np.random.shuffle(img_paths)
+
+for filename in tqdm(img_paths[:5000]):
+    img = load_img(str(filename))
+    features = model(img)
+    feature_set = np.squeeze(features)
+    outfile_name = os.path.basename(filename).split('.')[0] + ".npz"
+    out_path_file = os.path.join(imgvec_path, outfile_name)
+    np.savetxt(out_path_file, feature_set, delimiter=',')
+Use code with caution.
+Python
+4. Criação do Índice de Similaridade com Annoy
+
+Agora, vamos criar o índice Annoy para busca eficiente:
+
+# Configuração do Annoy
+dims = N_FEATURES
+n_nearest_neighbors = 20
+trees = 10000
+
+# Criação das estruturas de dados
+file_index_to_file_name = {}
+file_index_to_file_vector = {}
+file_index_to_product_id = {}
+
+# Leitura dos vetores de características
+allfiles = glob.glob('/content/img_vectors/*.npz')
+
+t = AnnoyIndex(dims, metric='angular')
+
+for findex, fname in tqdm(enumerate(allfiles)):
+  file_vector = np.loadtxt(fname)
+  file_name = os.path.basename(fname).split('.')[0]
+  file_index_to_file_name[findex] = file_name
+  file_index_to_file_vector[findex] = file_vector
+  try:
+    file_index_to_product_id[findex] = match_id(file_name)
+  except IndexError:
+    pass 
+  t.add_item(findex, file_vector)
+
+# Construção e salvamento do índice
+t.build(trees)
+t.save('t.ann')
+
+# Salvamento dos dicionários
+file_path = '/content/drive/MyDrive/ImgSim/'
+Path(file_path).mkdir(parents=True, exist_ok=True)
+
+t.save(file_path+'indexer.ann')
+pickle.dump(file_index_to_file_name, open(file_path+"file_index_to_file_name.p", "wb"))
+pickle.dump(file_index_to_file_vector, open(file_path+"file_index_to_file_vector.p", "wb"))
+pickle.dump(file_index_to_product_id, open(file_path+"file_index_to_product_id.p", "wb"))
+Use code with caution.
+Python
+5. Implementação da API REST com Flask
+
+Vamos criar uma API REST para receber imagens e retornar recomendações:
+
+# Criação do arquivo flask_app.py
+%%writefile flask_app.py
+### ----flask_app.py---- ###
+
+import pandas as pd
+import numpy as np
+from PIL import Image
+from annoy import AnnoyIndex
+import glob
+import os
+import tensorflow as tf
+import tarfile
+import pickle
+from pathlib import Path
+import time
+from utils import encoder, indexer
+import io
+import base64
+
+from flask import Flask, request, jsonify, send_file
+
+_PPATH = '/content/drive/MyDrive/ImgSim/'
+
+start_time = time.time()
+encoder = encoder.encoder
+print("---Encoder--- %s seconds ---" % (time.time() - start_time))
+
+topK = 6
+
+start_time = time.time()
+t = indexer.indexer
+print("---Indexer--- %s seconds ---" % (time.time() - start_time))
+
+# load the meta data
+meta_data = pd.read_csv(_PPATH+'styles.csv')
+
+# load the mappings
+file_index_to_file_name = pickle.load(open(_PPATH+'file_index_to_file_name.p', 'rb'))
+file_index_to_file_vector = pickle.load(open(_PPATH+'file_index_to_file_vector.p', 'rb'))
+file_index_to_product_id = pickle.load(open(_PPATH+'file_index_to_product_id.p', 'rb'))
+
+# load image path mapping
+path_dict = {}
+for path in Path('/content/Fashion_data/categories').rglob('*.jpg'):
+  path_dict[path.name] = path
+
+def load_img(path):
+  img = tf.io.read_file(path)
+  img = tf.io.decode_jpeg(img, channels=3)
+  img = tf.image.resize_with_pad(img, 224, 224)
+  img  = tf.image.convert_image_dtype(img, tf.float32)[tf.newaxis, ...]
+  return img
+
+query_path = '/content/user_query.jpg'
+
+def get_encoded_img(img):
+    img_byte_arr = io.BytesIO()
+    img.save(img_byte_arr, format='PNG')
+    my_encoded_img = base64.encodebytes(img_byte_arr.getvalue()).decode('ascii')
+    return my_encoded_img
+
+
+app = Flask(__name__)
+
+@app.route("/fashion", methods=["POST"])
+def home():
+    file = request.files['image']
+    # Read the image via file.stream
+    img = Image.open(file.stream)
+    img.save(query_path)
+
+    start_time = time.time()
+    test_vec = np.squeeze(encoder(load_img(query_path)))
+    print("---Encoding--- %s seconds ---" % (time.time() - start_time))
+
+    start_time = time.time()
+    nns = t.get_nns_by_vector(test_vec, n=topK)
+    print("---SimilarityIndex--- %s seconds ---" % (time.time() - start_time))
+
+    img_files = {}
+    img_captions = {}
+
+    start_time = time.time()
+    for count, i in enumerate(nns):
+      #image files
+      img_path = str(path_dict[file_index_to_file_name[i]+'.jpg'])
+      img_file = Image.open(img_path)
+      img_files[count] = get_encoded_img(img_file)
+      #image captions
+      item_id = file_index_to_product_id[i]
+      img_caption = '\n'.join([str(j) for j in list(meta_data.loc[item_id].values[-5:])])
+      img_captions[count] = img_caption
+    print("---Output--- %s seconds ---" % (time.time() - start_time))
+
+    return jsonify(img_files)
+
+app.run(debug=True)
+Use code with caution.
+Python
+# Criação do arquivo utils.py
+%%writefile utils.py
+### ----utils.py---- ###
+
+import os
+import tensorflow as tf
+from annoy import AnnoyIndex
+
+root_path = '/content/drive/MyDrive/ImgSim'
+
+class Encoder:
+  encoder = tf.keras.models.load_model(os.path.join(root_path, 'bit_feature_extractor'))
+
+class Indexer:
+  dims = 2048
+  topK = 6
+  indexer = AnnoyIndex(dims, 'angular')
+  indexer.load(os.path.join(root_path, 'indexer.ann'))
+  
+encoder = Encoder()
+indexer = Indexer()
+Use code with caution.
+Python
+6. Teste da API REST
+
+Vamos testar a API REST com uma imagem de exemplo:
+
+# Teste da API REST
+from PIL import Image
+from io import BytesIO
+import base64
+import requests
+
+!wget -O 'img.jpg' -q 'https://images-na.ssl-images-amazon.com/images/I/61utX8kBDlL._UL1100_.jpg'
+
+url = 'http://localhost:5000/fashion'
+my_img = {'image': open('img.jpg', 'rb')}
+r = requests.post(url, files=my_img)
+
+imgs = []
+for i in range(6):
+  img = base64.decodebytes(r.json()[str(i)].encode('ascii'))
+  img = Image.open(BytesIO(img)).convert('RGBA')
+  imgs.append(img)
+
+imgs[1]
+Use code with caution.
+Python
+7. Implementação da Interface Web com Streamlit
+
+Vamos criar uma interface web para que os usuários possam interagir com o sistema:
+
+# Criação do arquivo app.py
+%%writefile app.py
+### ----app.py---- ###
+
+import streamlit as st
+import pandas as pd
+import numpy as np
+from PIL import Image
+from annoy import AnnoyIndex
+import glob
+import os
+import tensorflow as tf
+import tarfile
+import pickle
+from pathlib import Path
+import time
+from utils import encoder, indexer
+
+root_path = '/content/drive/MyDrive/ImgSim'
+
+start_time = time.time()
+encoder = encoder.encoder
+print("---Encoder--- %s seconds ---" % (time.time() - start_time))
+
+topK = 6
+
+start_time = time.time()
+t = indexer.indexer
+print("---Indexer--- %s seconds ---" % (time.time() - start_time))
+
+# load the meta data
+meta_data = pd.read_csv(os.path.join(root_path, 'styles.csv'))
+
+# load the mappings
+file_index_to_file_name = pickle.load(open(os.path.join(root_path ,'file_index_to_file_name.p'), 'rb'))
+file_index_to_file_vector = pickle.load(open(os.path.join(root_path ,'file_index_to_file_vector.p'), 'rb'))
+file_index_to_product_id = pickle.load(open(os.path.join(root_path ,'file_index_to_product_id.p'), 'rb'))
+
+# load image path mapping
+path_dict = {}
+for path in Path('/content/Fashion_data/categories').rglob('*.jpg'):
+  path_dict[path.name] = path
+
+def load_img(path):
+  img = tf.io.read_file(path)
+  img = tf.io.decode_jpeg(img, channels=3)
+  img = tf.image.resize_with_pad(img, 224, 224)
+  img  = tf.image.convert_image_dtype(img, tf.float32)[tf.newaxis, ...]
+  return img
+
+query_path = '/content/user_query.jpg'
+
+st.title("Image Similarity App")
+
+uploaded_file = st.file_uploader("Choose an image...", type="jpg")
+
+if uploaded_file is not None:
+    image = Image.open(uploaded_file)
+    image.save(query_path)
+    st.image(image, caption='Uploaded Image.', use_column_width=True)
+    st.write("")
+    st.write("Top similar images...")
+    
+    start_time = time.time()
+    test_vec = np.squeeze(encoder(load_img(query_path)))
+    print("---Encoding--- %s seconds ---" % (time.time() - start_time))
+
+    start_time = time.time()
+    nns = t.get_nns_by_vector(test_vec, n=topK)
+    print("---SimilarityIndex--- %s seconds ---" % (time.time() - start_time))
+
+    img_files = []
+    img_captions = []
+
+    start_time = time.time()
+    for i in nns:
+      #image files
+      img_path = str(path_dict[file_index_to_file_name[i]+'.jpg'])
+      img_file = Image.open(img_path)
+      img_files.append(img_file)
+      #image captions
+      item_id = file_index_to_product_id[i]
+      img_caption = '\n'.join([str(j) for j in list(meta_data.loc[item_id].values[-5:])])
+      img_captions.append(img_caption)
+    print("---Output--- %s seconds ---" % (time.time() - start_time))
+
+    st.image(img_files, caption=img_captions, width=200)
+Use code with caution.
+Python
+# Execução do Streamlit
+from colab_everything import ColabStreamlit
+ColabStreamlit('app.py')
+Use code with caution.
+Python
+8. Documentação do Processo
+
+Objetivo: Construir um sistema de recomendação baseado em similaridade visual de imagens de produtos.
+
+Dataset: Fashion Product Images (Small) do Kaggle.
+
+Modelo de Extração de Características: BiT-M-50x3 (TensorFlow Hub).
+
+Sistema de Similaridade: Annoy (busca aproximada de vizinhos mais próximos).
+
+API:
+
+REST (Flask): Recebe uma imagem e retorna os produtos mais similares em JSON.
+
+Web (Streamlit): Permite ao usuário fazer upload de uma imagem e visualizar os resultados.
+
+Etapas:
+
+Preparação do ambiente e instalação das bibliotecas.
+
+Aquisição e organização dos dados.
+
+Extração de características com CNN.
+
+Criação do índice de similaridade com Annoy.
+
+Criação de dicionários de mapeamento.
+
+Implementação da API REST com Flask.
+
+Implementação da interface web com Streamlit.
+
+Testes e avaliação.
+
+Resultados:
+
+O sistema é capaz de encontrar produtos visualmente similares com base em uma imagem de entrada.
+
+A API REST e a interface web permitem que os usuários interajam com o sistema.
